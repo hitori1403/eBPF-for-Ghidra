@@ -33,6 +33,11 @@ define token immtoken(64)
 #To operate with registers
 attach variables [ src dst ] [  R0  R1  R2  R3  R4  R5  R6  R7  R8  R9  R10  _  _  _  _  _  ];
 
+macro pop88(x) {
+	x = *:8 R10;
+	R10 = R10 - 8;
+}
+
 #Arithmetic instructions
 ###############################################################################
 
@@ -119,7 +124,7 @@ attach variables [ src dst ] [  R0  R1  R2  R3  R4  R5  R6  R7  R8  R9  R10  _  
 #For each instruction which needs relocation, it inject corresponding file descriptor to imm field. 
 #As a part of protocol, src_reg is set to BPF_PSEUDO_MAP_FD (which defined as 1) to notify kernel this is a map loading instruction.
 
-:LDDW dst, imm  is imm & src=1 & dst & op_ld_st_mode=0x0 & op_ld_st_size=0x3 & op_insn_class=0x0; imm2 { dst = *:8 imm:8; }
+#:LDDW dst, imm  is imm & src=1 & dst & op_ld_st_mode=0x0 & op_ld_st_size=0x3 & op_insn_class=0x0; imm2 { dst = *:8 imm:8; }
 
 :LDABSW dst, imm  is imm & dst & op_ld_st_mode=0x1 & op_ld_st_size=0x0 & op_insn_class=0x0 { dst=*:4 imm:8; }
 
@@ -262,10 +267,30 @@ joff: reloc  is off [ reloc = inst_next + off * 8; ] { export *:8 reloc; }
 	if (dst:1) goto joff;
 }
 
-SysCall:  imm is imm { export *[syscall]:1 imm; }
-
-:CALL SysCall  is imm & op_alu_jmp_opcode=0x8 & op_alu_jmp_source=0 & op_insn_class=0x5 & SysCall {
-	call SysCall;
+#SysCall:  imm is imm { export *[syscall]:1 imm; }
+dest: rel is imm [ rel = inst_next + imm*8; ] {
+	export *[ram]:4 rel;
 }
 
-:EXIT is op_alu_jmp_opcode=0x9 & op_alu_jmp_source=0 & op_insn_class=0x5 { return [*:8 R10]; }
+:CALL dest is dest & op_alu_jmp_opcode=0x8 & op_alu_jmp_source=0 & op_insn_class=0x5 {
+	# store return address on stack
+	R10=R10+8;
+	*:8 R10 = inst_next;
+	# create new stack frame
+	R10=R10+4096;
+	call dest;
+}
+
+# tail call
+:CALLX dst is src & dst & op_alu_jmp_opcode=0x8 & op_alu_jmp_source=1 & op_insn_class=0x5 {
+	call dst;
+}
+
+:EXIT is op_alu_jmp_opcode=0x9 & op_alu_jmp_source=0 & op_insn_class=0x5 {
+	# pop statically sized stack frame
+	R10=R10-4096;
+	# retaddr=*:8 R10;
+	# R10=R10-8;
+	pop88(PC);
+	return [PC];
+}
