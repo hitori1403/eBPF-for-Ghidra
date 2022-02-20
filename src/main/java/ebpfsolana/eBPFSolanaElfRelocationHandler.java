@@ -1,26 +1,12 @@
-/* ###
- * IP: GHIDRA
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package ghidra.app.util.bin.format.elf.relocation;
+package ebpfsolana;
 
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.util.Arrays;
 
-import ghidra.MurmurHash3;
 import ghidra.app.util.bin.format.elf.*;
+import ghidra.app.util.bin.format.elf.relocation.ElfRelocationContext;
+import ghidra.app.util.bin.format.elf.relocation.ElfRelocationHandler;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Listing;
 import ghidra.program.model.listing.CodeUnit;
@@ -30,7 +16,7 @@ import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.symbol.SymbolTable;
 import ghidra.util.exception.NotFoundException;
 
-public class eBPF_ElfRelocationHandler extends ElfRelocationHandler {
+public class eBPFSolanaElfRelocationHandler extends ElfRelocationHandler {
 	/// Start of the program bits (text and ro segments) in the memory map
 	public static final long MM_PROGRAM_START = 0x100000000L;
 	/// Start of the stack in the memory map
@@ -113,10 +99,10 @@ public class eBPF_ElfRelocationHandler extends ElfRelocationHandler {
 		if (type == 1) {			
 			elfRelocationContext.getLog().appendMsg(String.format("type 1 reloc"));
 			try {
-				String sec_name = elfRelocationContext.relocationTable.getSectionToBeRelocated().getNameAsString();
-				if (sec_name.toString().contains("debug")) {
-					return;
-				}
+				//String sec_name = elfRelocationContext.relocationTable.getSectionToBeRelocated().getNameAsString();
+				//if (sec_name.toString().contains("debug")) {
+				//	return;
+				//}
 
 				// skip relocations in the debug section ???
 				// String map = Symbol.getNameAsString();				

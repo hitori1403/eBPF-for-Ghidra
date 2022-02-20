@@ -1,12 +1,12 @@
-
-package ghidra.app.util.bin.format.elf.extend;
+package ebpfsolana;
 
 import ghidra.app.util.bin.format.elf.*;
+import ghidra.app.util.bin.format.elf.extend.ElfExtension;
 import ghidra.program.model.lang.*;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
-public class eBPF_ElfExtension extends ElfExtension {
+public class eBPFSolanaElfExtension extends ElfExtension {
 	
 	@Override
 	public boolean canHandle(ElfHeader elf) {
