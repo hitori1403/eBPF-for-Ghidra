@@ -1,4 +1,4 @@
-package ebpfsolana;
+package ghidra.app.util.bin.format.elf.relocation;
 
 import ghidra.app.plugin.core.reloc.RelocationFixupHandler;
 import ghidra.app.util.opinion.ElfLoader;

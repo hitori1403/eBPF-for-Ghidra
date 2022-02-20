@@ -1,19 +1,14 @@
-package ebpfsolana;
+package ghidra.app.util.bin.format.elf.relocation;
 
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
-import java.util.Arrays;
-
 import ghidra.app.util.bin.format.elf.*;
-import ghidra.app.util.bin.format.elf.relocation.ElfRelocationContext;
-import ghidra.app.util.bin.format.elf.relocation.ElfRelocationHandler;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Listing;
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.program.model.symbol.SymbolTable;
 import ghidra.util.exception.NotFoundException;
 
 public class eBPFSolanaElfRelocationHandler extends ElfRelocationHandler {
@@ -32,7 +27,7 @@ public class eBPFSolanaElfRelocationHandler extends ElfRelocationHandler {
 	}
 
 	private int hashSymbolName(CharBuffer name) {
-		int hash = MurmurHash3.murmurhash3_x86_32(name, 0, name.length(), 0);
+		int hash = 0;//MurmurHash3.murmurhash3_x86_32(name, 0, name.length(), 0);
 		return hash;
 	}
 
