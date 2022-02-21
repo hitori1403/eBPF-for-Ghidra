@@ -43,10 +43,10 @@ public class eBPFSolanaElfRelocationHandler extends ElfRelocationHandler {
 		int type = relocation.getType();	
 		int symbolIndex = relocation.getSymbolIndex();				
 
-				// addend is either pulled from the relocation or the bytes in memory
+		// addend is either pulled from the relocation or the bytes in memory
 		long addend =
 			relocation.hasAddend() ? relocation.getAddend() : memory.getLong(relocationAddress);
-				ElfSymbol sym = null;
+		ElfSymbol sym = null;
 
 		long symbolValue = 0;
 		Address symbolAddr = null;
@@ -73,12 +73,11 @@ public class eBPFSolanaElfRelocationHandler extends ElfRelocationHandler {
 		Address imm_offset = relocationAddress.add(4);
 		// the types are (hopefully) implemented according to how the solana rBPF implementation does it
 		// R_BPF_64_64
-		if (type == 1) {			
-			value = symbolValue + addend;
-
+		if (type == 1) {
+			
+			value = symbolValue;
 			Address refd_va = program.getAddressFactory().getDefaultAddressSpace().getAddress(memory.getInt(imm_offset));
-			Address refd_pa = refd_va.add(baseOffset);
-			value += refd_pa.getOffset();
+			value += refd_va.getOffset(); 
 				
 			// do the actual relocation work
 			memory.setInt(imm_offset, (int)(value & 0xffffffff));			
@@ -119,18 +118,20 @@ public class eBPFSolanaElfRelocationHandler extends ElfRelocationHandler {
 				long target_pc = symbolValue;// - text_section.getAddress();
 				
 				// next instruction address that the call will be relative to
-				long this_pc = relocation.getOffset() + 4 + baseOffset;
+				// minus modulo 8 to get to the address of the current instruction
+				// then add 8 to get to the next one
+				long this_pc = relocation.getOffset() - (relocation.getOffset() % 8) + 8 + baseOffset;
 				targetAddr = (int)((target_pc - this_pc)/8);
 				call_type = "function";
 			} else {
 				// syscall
 				call_type = "syscall";
-				SymbolTable table = program.getSymbolTable();
-				Symbol symbol = table.getSymbol(symbolIndex);
 				// address of the symbol in the EXTERNAL section
-				long target_pc = symbol.getAddress().getOffset();
+				long target_pc = symbolAddr.getOffset();
 				// next instruction address that the call will be relative to
-				long this_pc = relocation.getOffset() + 3 + baseOffset;
+				// minus modulo 8 to get to the address of the current instruction
+				// then add 8 to get to the next one
+				long this_pc = relocation.getOffset() - (relocation.getOffset() % 8) + 8 + baseOffset;
 				targetAddr = (int)((target_pc - this_pc)/8);
 			}
 			

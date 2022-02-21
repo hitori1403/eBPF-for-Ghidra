@@ -56,8 +56,10 @@ public class eBPFSolanaAnalyzer extends ConstantPropagationAnalyzer {
 		SymbolIterator symbols = table.getAllSymbols(includeDynamicSymbols);
 		
 		for (ghidra.program.model.symbol.Symbol s : symbols) {
+			if (!s.isExternal())
+				continue;
 				
-			if (s.getName().contains("syscall")){			
+			if (s.getName().contains("sol_") && false){			
 				Function func = program.getFunctionManager().getFunctionAt(s.getAddress());
 				
 				//Definitions for datatypes
