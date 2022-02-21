@@ -14,10 +14,13 @@ You now should be able to right click on the project and choose
 `Run as > Ghidra` to start ghidra with the extension installed.
 
 # Installation
-  
+
 - Download Release version of extension and install it in Ghidra `File → Install Extensions...` 
 - Use gradle to build extension: `GHIDRA_INSTALL_DIR=${GHIDRA_HOME} gradle` and use Ghidra to install it: `File → Install Extensions...` 
 
+# Known Issues
+- Rebasing after a program has been imported might lead to messed up relocations.
+  Everything should work as expected when specifying base address in import options.
 
 # Useful links
 
