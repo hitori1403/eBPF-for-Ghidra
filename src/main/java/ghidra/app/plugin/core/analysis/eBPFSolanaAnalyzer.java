@@ -4,6 +4,7 @@ import ghidra.app.cmd.function.SetFunctionNameCmd;
 import ghidra.app.cmd.function.SetFunctionVarArgsCommand;
 import ghidra.app.cmd.function.SetReturnDataTypeCmd;
 import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.CharDataType;
@@ -24,7 +25,7 @@ import ghidra.program.model.data.UnsignedShortDataType;
 import ghidra.program.model.data.VoidDataType;
 import ghidra.program.model.listing.BookmarkManager;
 import ghidra.program.model.listing.Function;
-import ghidra.app.cmd.function.AddMemoryParameterCommand;
+import ghidra.app.cmd.function.AddRegisterParameterCommand;
 
 public class eBPFSolanaAnalyzer extends ConstantPropagationAnalyzer {
 
@@ -59,7 +60,7 @@ public class eBPFSolanaAnalyzer extends ConstantPropagationAnalyzer {
 			if (!s.isExternal())
 				continue;
 				
-			if (s.getName().contains("sol_") && false){			
+			if (s.getName().startsWith("sol_")){			
 				Function func = program.getFunctionManager().getFunctionAt(s.getAddress());
 				
 				//Definitions for datatypes
@@ -79,16 +80,20 @@ public class eBPFSolanaAnalyzer extends ConstantPropagationAnalyzer {
 				//Command-vars
 				SetFunctionNameCmd cmdName;
 				SetReturnDataTypeCmd cmdRet;
-				AddMemoryParameterCommand cmdArg1;
-				AddMemoryParameterCommand cmdArg2;
-				AddMemoryParameterCommand cmdArg3;
-				AddMemoryParameterCommand cmdArg4;
-				AddMemoryParameterCommand cmdArg5;
+				AddRegisterParameterCommand cmdArg1;
+				AddRegisterParameterCommand cmdArg2;
+				AddRegisterParameterCommand cmdArg3;
+				AddRegisterParameterCommand cmdArg4;
+				AddRegisterParameterCommand cmdArg5;
 				SetFunctionVarArgsCommand cmdVar = new SetFunctionVarArgsCommand(func,true);
 				
-				String location = s.getName().substring(14); //Getting address of helper
-				int helper_id = Integer.parseInt(location,16);
-				switch(helper_id) {
+				try {
+					func.setCallingConvention("ebpf_call");
+				} catch (InvalidInputException e) {
+					e.printStackTrace();
+				}
+				
+				switch(s.getName()) {
 		// 			// case(0x0):	
 		// 			// 	//void bpf_unspec()
 		// 			// 	cmdName = new SetFunctionNameCmd(s.getAddress(), "bpf_unspec", SourceType.ANALYSIS);					
@@ -175,13 +180,13 @@ public class eBPFSolanaAnalyzer extends ConstantPropagationAnalyzer {
 		// 			// 	cmdRet.applyTo(program);				
 		// 			// 	program.flushEvents();	
 		// 			// 	break;
-					case(0x6):
-						//int bpf_trace_printk(const char *fmt, u32 fmt_size, ...)
-						cmdName = new SetFunctionNameCmd(s.getAddress(), "bpf_trace_printk", SourceType.ANALYSIS);					
-						cmdRet = new SetReturnDataTypeCmd(s.getAddress(), dint , SourceType.ANALYSIS);		
+					case("sol_log_"):
+						// TODO: write code that parses an annotated syscalls.txt and generates switch-cases like this
+						cmdName = new SetFunctionNameCmd(s.getAddress(), "sol_log_", SourceType.ANALYSIS);					
+						cmdRet = new SetReturnDataTypeCmd(s.getAddress(), dint , SourceType.ANALYSIS);
 						
-						cmdArg1 = new AddMemoryParameterCommand(func, s.getAddress(), "fmt", dcp, 0, SourceType.ANALYSIS);	
-						cmdArg2 = new AddMemoryParameterCommand(func, s.getAddress(), "fmt_size", duint, 1, SourceType.ANALYSIS);							
+						cmdArg1 = new AddRegisterParameterCommand(func, program.getProgramContext().getRegister("R1"), "addr", dcp, 0, SourceType.ANALYSIS);	
+						cmdArg2 = new AddRegisterParameterCommand(func, program.getProgramContext().getRegister("R2"), "len", duint, 1, SourceType.ANALYSIS);							
 												
 						cmdName.applyTo(program);
 						cmdRet.applyTo(program);
