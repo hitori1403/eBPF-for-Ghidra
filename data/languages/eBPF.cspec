@@ -25,9 +25,9 @@
    	  <range space="ram"/>
    	  <range space="syscall"/>
    </global> 
-  <stackpointer register="R10" space="ram" growth="positive"/>
+  <stackpointer register="R10" space="ram" growth="negative"/>
    <default_proto>
-    <prototype name="ebpf_call" extrapop="4104" stackshift="8">
+    <prototype name="ebpf_call" extrapop="8" stackshift="8">
       <input>
         <pentry minsize="1" maxsize="8">
           <register name="R1"/>
@@ -52,7 +52,7 @@
        </output>
       <unaffected>
         <register name="R6"/>       
-	      <register name="R7"/>
+	    <register name="R7"/>
         <register name="R8"/>
         <register name="R9"/>       
       </unaffected> 

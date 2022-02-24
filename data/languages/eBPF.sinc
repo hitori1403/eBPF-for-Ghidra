@@ -35,7 +35,7 @@ attach variables [ src dst ] [  R0  R1  R2  R3  R4  R5  R6  R7  R8  R9  R10  _  
 
 macro pop88(x) {
 	x = *:8 R10;
-	R10 = R10 - 8;
+	R10 = R10 + 8;
 }
 
 #Arithmetic instructions
@@ -273,12 +273,13 @@ dest: rel is imm [ rel = inst_next + imm*8; ] {
 }
 
 :CALL dest is dest & op_alu_jmp_opcode=0x8 & op_alu_jmp_source=0 & op_insn_class=0x5 {
-	# store return address on stack
-	R10=R10+8;
-	*:8 R10 = inst_next;
 	# create new stack frame
-	R10=R10+4096;
+	# R10=R10-4096;
+	# store return address on stack
+	# R10=R10-8;
+	*:8 (R10-4096) = inst_next;
 	call dest;
+	# R10=R10+4096;
 }
 
 # tail call
@@ -288,9 +289,10 @@ dest: rel is imm [ rel = inst_next + imm*8; ] {
 
 :EXIT is op_alu_jmp_opcode=0x9 & op_alu_jmp_source=0 & op_insn_class=0x5 {
 	# pop statically sized stack frame
-	R10=R10-4096;
+	# R10=R10+4096;
 	# retaddr=*:8 R10;
 	# R10=R10-8;
-	pop88(PC);
+	# pop88(PC);
+	PC = *:8 (R10-4096);
 	return [PC];
 }
