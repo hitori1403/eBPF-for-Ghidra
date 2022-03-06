@@ -11,13 +11,16 @@ define space register type=register_space size=4;
 define space syscall type=ram_space size=2;
 
 define register offset=0 size=8 [ R0  R1  R2  R3  R4  R5  R6  R7  R8  R9  R10  PC ];
+define register offset=0 size=4 [ R0W _  R1W _  R2W _  R3W _  R4W _  R5W _  R6W _  R7W _  R8W _  R9W _  _ _  _ _  _ _ ];
  
 # Instruction encoding: Insop:8, dst_reg:4, src_reg:4, off:16, imm:32 - from lsb to msb
 define token instr(64)
 	imm=(32, 63) signed
 	off=(16, 31) signed
 	src=(12, 15)
+	src32=(12, 15)
 	dst=(8, 11)
+	dst32=(8, 11)
 	op_alu_jmp_opcode=(4, 7)
 	op_alu_jmp_source=(3, 3)
 	op_ld_st_mode=(5, 7)
@@ -32,6 +35,7 @@ define token immtoken(64)
 
 #To operate with registers
 attach variables [ src dst ] [  R0  R1  R2  R3  R4  R5  R6  R7  R8  R9  R10  _  _  _  _  _  ];
+attach variables [ src32 dst32 ] [  R0W  R1W  R2W  R3W  R4W  R5W  R6W  R7W  R8W  R9W _  _  _  _  _  _  ];
 
 macro pop88(x) {
 	x = *:8 R10;
@@ -126,29 +130,53 @@ macro pop88(x) {
 
 #:LDDW dst, imm  is imm & src=1 & dst & op_ld_st_mode=0x0 & op_ld_st_size=0x3 & op_insn_class=0x0; imm2 { dst = *:8 imm:8; }
 
-:LDABSW dst, imm  is imm & dst & op_ld_st_mode=0x1 & op_ld_st_size=0x0 & op_insn_class=0x0 { dst=*:4 imm:8; }
+:LDABSW dst, imm  is imm & dst & op_ld_st_mode=0x1 & op_ld_st_size=0x0 & op_insn_class=0x0 {
+	dst = zext(*:4 imm:8);
+}
 
-:LDABSH dst, imm  is imm & dst & op_ld_st_mode=0x1 & op_ld_st_size=0x1 & op_insn_class=0x0 { dst=*:2 imm:8; }
+:LDABSH dst, imm  is imm & dst & op_ld_st_mode=0x1 & op_ld_st_size=0x1 & op_insn_class=0x0 {
+	dst = zext(*:2 imm:8);
+}
 
-:LDABSB dst, imm  is imm & dst &  op_ld_st_mode=0x1 & op_ld_st_size=0x2 & op_insn_class=0x0 { dst=*:1 imm:8; }
+:LDABSB dst, imm  is imm & dst &  op_ld_st_mode=0x1 & op_ld_st_size=0x2 & op_insn_class=0x0 {
+	dst = zext(*:1 imm:8);
+}
 
-:LDABSDW dst, imm  is imm & dst & op_ld_st_mode=0x1 & op_ld_st_size=0x3 & op_insn_class=0x0 { dst=*:8 imm:8; }
+:LDABSDW dst, imm  is imm & dst & op_ld_st_mode=0x1 & op_ld_st_size=0x3 & op_insn_class=0x0 {
+	dst=*:8 imm:8;
+}
 
-:LDINDW src, dst, imm  is imm & src & dst & op_ld_st_mode=0x2 & op_ld_st_size=0x0 & op_insn_class=0x0  { dst=*:4 (src + imm); }
+:LDINDW src, dst, imm  is imm & src & dst & op_ld_st_mode=0x2 & op_ld_st_size=0x0 & op_insn_class=0x0  {
+	dst = zext(*:4 (src + imm));
+}
 
-:LDINDH src, dst, imm  is imm & src & dst & op_ld_st_mode=0x2 & op_ld_st_size=0x1 & op_insn_class=0x0 { dst=*:2 (src + imm); }
+:LDINDH src, dst, imm  is imm & src & dst & op_ld_st_mode=0x2 & op_ld_st_size=0x1 & op_insn_class=0x0 {
+	dst = zext(*:2 (src + imm));
+}
 
-:LDINDB src, dst, imm  is imm & src & dst & op_ld_st_mode=0x2 & op_ld_st_size=0x2 & op_insn_class=0x0 { dst=*:1 (src + imm); }
+:LDINDB src, dst, imm  is imm & src & dst & op_ld_st_mode=0x2 & op_ld_st_size=0x2 & op_insn_class=0x0 {
+	dst = zext(*:1 (src + imm));
+}
 
-:LDINDDW src, dst, imm  is imm & src & dst & op_ld_st_mode=0x2 & op_ld_st_size=0x3 & op_insn_class=0x0 { dst=*:8 (src + imm); }
+:LDINDDW src, dst, imm  is imm & src & dst & op_ld_st_mode=0x2 & op_ld_st_size=0x3 & op_insn_class=0x0 {
+	dst=*:8 (src + imm);
+}
 
-:LDXW dst, [src + off]  is off & src & dst & op_ld_st_mode=0x3 & op_ld_st_size=0x0 & op_insn_class=0x1 { dst=*:4 (src + off); }
+:LDXW dst, [src + off]  is off & src & dst & op_ld_st_mode=0x3 & op_ld_st_size=0x0 & op_insn_class=0x1 {
+	dst = zext(*:4 (src + off));
+}
 
-:LDXH dst, [src + off]  is off & src & dst & op_ld_st_mode=0x3 & op_ld_st_size=0x1 & op_insn_class=0x1 { dst=*:2 (src + off); }
+:LDXH dst, [src + off]  is off & src & dst & op_ld_st_mode=0x3 & op_ld_st_size=0x1 & op_insn_class=0x1 {
+	dst = zext(*:2 (src + off));
+}
 
-:LDXB dst, [src + off]  is off & src & dst & op_ld_st_mode=0x3 & op_ld_st_size=0x2 & op_insn_class=0x1 { dst=*:1 (src + off); }
+:LDXB dst, [src + off]  is off & src & dst & op_ld_st_mode=0x3 & op_ld_st_size=0x2 & op_insn_class=0x1 {
+	dst = zext(*:1 (src + off));
+}
 
-:LDXDW dst, [src + off]  is off & src & dst & op_ld_st_mode=0x3 & op_ld_st_size=0x3 & op_insn_class=0x1 { dst=*:8 (src + off); }
+:LDXDW dst, [src + off]  is off & src & dst & op_ld_st_mode=0x3 & op_ld_st_size=0x3 & op_insn_class=0x1 {
+	dst = *:8 (src + off);
+}
 
 :STW [dst + off], imm  is imm & off & dst & op_ld_st_mode=0x3 & op_ld_st_size=0x0 & op_insn_class=0x2 { *:4 (dst + off)=imm:4; }
 
@@ -158,7 +186,7 @@ macro pop88(x) {
 
 :STDW [dst + off], imm  is imm & off & dst & op_ld_st_mode=0x3 & op_ld_st_size=0x3 & op_insn_class=0x2 { *:8 (dst + off)=imm:8; }
 
-:STXW [dst + off], src  is off & src & dst & op_ld_st_mode=0x3 & op_ld_st_size=0x0 & op_insn_class=0x3 { *:4 (dst + off)=src:4; }
+:STXW [dst + off], src  is off & src & dst & op_ld_st_mode=0x3 & op_ld_st_size=0x0 & op_insn_class=0x3 { *:4 (dst + off) = src:4; }
 
 :STXH [dst + off], src  is off & src & dst & op_ld_st_mode=0x3 & op_ld_st_size=0x1 & op_insn_class=0x3 { *:2 (dst + off)=src:2; }
 
@@ -273,13 +301,11 @@ dest: rel is imm [ rel = inst_next + imm*8; ] {
 }
 
 :CALL dest is dest & op_alu_jmp_opcode=0x8 & op_alu_jmp_source=0 & op_insn_class=0x5 {
-	# create new stack frame
-	# R10=R10-4096;
 	# store return address on stack
-	# R10=R10-8;
-	*:8 (R10-4096) = inst_next;
+	R10=R10+8;
+	*:8 (R10) = inst_next;
+	# pcode injection should create a stack frame with 0x1000 size at the function start
 	call dest;
-	# R10=R10+4096;
 }
 
 # tail call
@@ -288,11 +314,12 @@ dest: rel is imm [ rel = inst_next + imm*8; ] {
 }
 
 :EXIT is op_alu_jmp_opcode=0x9 & op_alu_jmp_source=0 & op_insn_class=0x5 {
-	# pop statically sized stack frame
-	# R10=R10+4096;
-	# retaddr=*:8 R10;
-	# R10=R10-8;
-	# pop88(PC);
-	PC = *:8 (R10-4096);
+	# pop statically sized stack frame that
+	# should be created from pcode injection at function start
+	R10=R10-4096;
+	# pop the return address
+	PC = *:8 (R10);
+	R10=R10-8;
+
 	return [PC];
 }
