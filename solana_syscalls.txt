@@ -1,3 +1,16 @@
+/// Receives raw transaction data as argument.
+/// Generally the entrypoint! macro takes care of deserializing this data and
+/// calls the user-supplied process_instruction on it.
+/// Function calls are usually in this order:
+///   - entrypoint::deserialize()
+///   - instruction_data.as_slice()
+///   - process_instruction()
+/// Function signatures for deserialize/process_instruction can be found under
+/// the SOLANA category in the DataType manager. They need to be applied
+/// manually via right click, edit, copy the signature and paste it into
+/// function signature.
+u64 entrypoint(u8 *transaction_data)
+
 /// TODO
 u64 abort()
 
