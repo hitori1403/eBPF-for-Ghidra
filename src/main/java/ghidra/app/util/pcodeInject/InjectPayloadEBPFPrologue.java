@@ -145,12 +145,17 @@ public class InjectPayloadEBPFPrologue implements InjectPayload {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		return (obj instanceof InjectPayloadEBPFPrologue);		// All instances are equal
-	}
-
-	@Override
-	public int hashCode() {
-		return 125474219;		// All instances are equal
+	public boolean isEquivalent(InjectPayload obj) {
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		InjectPayloadEBPFPrologue op2 = (InjectPayloadEBPFPrologue) obj;
+		if (!name.equals(op2.name)) {
+			return false;
+		}
+		if (!sourceName.equals(op2.sourceName)) {
+			return false;
+		}
+		return true;
 	}
 }
