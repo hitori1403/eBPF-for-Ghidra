@@ -15,6 +15,8 @@
  */
 package ghidra.app.util.pcodeInject;
 
+import java.io.IOException;
+
 import ghidra.app.plugin.processors.sleigh.PcodeEmit;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.program.model.address.AddressSpace;
@@ -23,8 +25,7 @@ import ghidra.program.model.lang.InjectPayload;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.pcode.PcodeOp;
-import ghidra.program.model.pcode.Varnode;
+import ghidra.program.model.pcode.*;
 import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.*;
 
@@ -122,12 +123,12 @@ public class InjectPayloadEBPFPrologue implements InjectPayload {
 	}
 
 	@Override
-	public void saveXml(StringBuilder buffer) {
+	public void encode(Encoder encoder) throws IOException {
 		// Provide a minimal tag so decompiler can call-back
-		buffer.append("<pcode");
-		SpecXmlUtils.encodeStringAttribute(buffer, "inject", "uponentry");
-		SpecXmlUtils.encodeBooleanAttribute(buffer, "dynamic", true);
-		buffer.append("/>\n");
+		encoder.openElement(ElementId.ELEM_PCODE);
+		encoder.writeString(AttributeId.ATTRIB_INJECT, "uponentry");
+		encoder.writeBool(AttributeId.ATTRIB_DYNAMIC, true);
+		encoder.closeElement(ElementId.ELEM_PCODE);
 	}
 
 	@Override
